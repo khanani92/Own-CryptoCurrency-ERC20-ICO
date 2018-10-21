@@ -30,4 +30,33 @@ contract('KhananiToken', function(accounts){
         })
     })
 
+    it('transfers token ownership',function(){
+        return KhananiToken.deployed().then(function(instance){
+            tokenInstance = instance;
+            //Test 'require' statement first by transfaring something larger than sender's balance
+            //Method called with .call() don't actually call the function and create the transction
+            return tokenInstance.transfer.call(accounts[1], 99999999999999999999999);
+        }).then(assert.fail).catch(function(error){
+            //console.log('????????',typeof error,typeof error.message,error.message.indexOf('revert') >= 0)
+            assert((error.message.indexOf('revert') >= 0), 'error msg must contain revert');
+            return tokenInstance.transfer.call(accounts[1],250000, {from: accounts[0]})            
+        }).then(function(success){
+            assert.equal(success, true, 'it returns ture');
+            return tokenInstance.transfer(accounts[1], 250000, {from: accounts[0]});
+        })
+        .then(function(receipt){
+            assert.equal(receipt.logs.length, 1, 'trigger one event');
+            assert.equal(receipt.logs[0].event, 'Transfer', 'should be a transfer event');
+            assert.equal(receipt.logs[0].args._from, accounts[0], 'logs the account tokens are transferred from');
+            assert.equal(receipt.logs[0].args._to, accounts[1], 'logs the account tokens are transferred to');
+            assert.equal(receipt.logs[0].args._value, 250000, 'logs the transfer amount');
+            return tokenInstance.balanceOf(accounts[1]);
+        }).then(function(accountBalance){
+            assert.equal(accountBalance.toNumber(), 250000, 'it adds amount to reciving account');
+            return tokenInstance.balanceOf(accounts[0]);
+        }).then(function(adminBalance){
+            assert.equal(adminBalance.toNumber(), 750000, 'it deducts amount from sending account');
+        })
+    })
+
 })
