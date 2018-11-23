@@ -5,7 +5,7 @@ import './KhananiToken.sol';
 contract KhananiTokenSale {
     address admin;
     KhananiToken public tokenContract;
-    uint256 public tokenPrice = 0;
+    uint256 public tokenPrice;
     uint256 public tokensSold;
 
     event Sell(
@@ -31,7 +31,7 @@ contract KhananiTokenSale {
 
     //Buy Token
 
-    function buyTokens(uint256 _numberOfTokens) public payable {
+    function buyToken(uint256 _numberOfTokens) public payable {
         //Require that value is equal to token
         require(msg.value == multiply(_numberOfTokens , tokenPrice));
 
@@ -49,24 +49,15 @@ contract KhananiTokenSale {
         Sell(msg.sender, _numberOfTokens);
     }
 
-
-
     //Ending of Token Salse
-    // function endSale() public{
-    //     //require admin
-    //     require(msg.sender == admin);
-
-    //     //transfer remaing token to admin
-    //     require(tokenContract.transfer(admin, tokenContract.balanceOf(this)));
-    //     //Destory this contract
-    //     selfdestruct(admin);
-
-    // }
-
-    function endSale() public {
+    function endSale() public{
+        //require admin
         require(msg.sender == admin);
+
+        //transfer remaing token to admin
         require(tokenContract.transfer(admin, tokenContract.balanceOf(this)));
-        selfdestruct(admin);
+        //Destory this contract
+
     }
 
 }

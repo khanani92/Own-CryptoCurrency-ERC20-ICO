@@ -8,7 +8,7 @@ contract('KhananiTokenSale', function(accounts){
     var admin = accounts[0];
     var buyer = accounts[1];
     var tokensAvailable = 750000;
-    var numberOfToken;
+    var numberOfTokens;
     it('initializes the contract with correct value',function(){
         return KhananiTokenSale.deployed().then(function(instance){
             tokenSaleInstance = instance;
@@ -29,45 +29,150 @@ contract('KhananiTokenSale', function(accounts){
         // })
     })
 
-    it('facilitates token buying',function(){
-        return KhananiToken.deployed().then(function(instance){
-            tokenInstance = instance;
-            return KhananiTokenSale.deployed();
-        }).then(function(SInstance){
-            tokenSaleInstance = SInstance;
+    
+    it('facilitates token buying', function() {
+        return KhananiToken.deployed().then(function(instance) {
+          // Grab token instance first
+          tokenInstance = instance;
+          return KhananiTokenSale.deployed();
+        }).then(function(instance) {
             //provision 75% of all token sale 
             return tokenInstance.transfer(tokenSaleInstance.address, tokensAvailable, {from:admin} );
         }).then(function(receipt){
-            numberOfToken = 10;
-            var value = numberOfToken * tokenPrice; 
-            return tokenSaleInstance.buyToken(numberOfToken,{from: buyer, value: value});
-        }).then(function(receipt){
+            numberOfTokens = 10;            
+            return tokenSaleInstance.buyTokens(numberOfTokens,{from: buyer, value: numberOfTokens * tokenPrice});
+       }).then(function(receipt){
             assert.equal(receipt.logs.length, 1, 'trigger one event');
             assert.equal(receipt.logs[0].event, 'Sell', 'should be a sell event');
             assert.equal(receipt.logs[0].args._buyer, buyer, 'logs the account that purchased tokens');
-            assert.equal(receipt.logs[0].args._amount, numberOfToken, 'logs the number of token purchased');
+            assert.equal(receipt.logs[0].args._amount, numberOfTokens, 'logs the number of token purchased');
             return tokenSaleInstance.tokensSold();
-        }).then(function(amount){
-            assert.equal(amount.toNumber(), numberOfToken, 'increments the number of tokens sold');
+        })
+        .then(function(amount){
+            assert.equal(amount.toNumber(), numberOfTokens, 'increments the number of tokens sold');
             return tokenInstance.balanceOf(buyer);
         })
         .then(function(buyerBalance){
-            console.log('buyer',buyerBalance.toNumber())
-            assert.equal(buyerBalance.toNumber(), numberOfToken)    
+            assert.equal(buyerBalance.toNumber(), numberOfTokens)    
             return tokenInstance.balanceOf(tokenSaleInstance.address);
         })
         .then(function(balance){
-            assert.equal(balance.toNumber(), tokensAvailable - numberOfToken)
+            assert.equal(balance.toNumber(), tokensAvailable - numberOfTokens)
             //try to buy token diff from the ether value
-            return tokenSaleInstance.buyToken(numberOfToken,{from: buyer, value: 1});
+            return tokenSaleInstance.buyTokens(numberOfTokens,{from: buyer, value: 1});
         }).then(assert.fail).catch(function(error){
             assert(error.message.indexOf('revert') >= 0, 'msg.value must be equal number of tokens in wei')
-            return tokenSaleInstance.buyToken(800000,{from: buyer, value: numberOfToken * tokenPrice});
+            return tokenSaleInstance.buyTokens(800000,{from: buyer, value: numberOfTokens * tokenPrice});
         })
         .then(assert.fail).catch(function(error){
-            //console.log(error);
-            assert(error.message.indexOf('revert') >= 0, '1 cannot purchase more tokens then available')
+            assert(error.message.indexOf('revert') >= 0, ' cannot purchase more tokens then available')
         })
-    })
-    
+      });
+
+
+
+    // it('facilitates token buying',function(){
+    //     return KhananiToken.deployed().then(function(instance){
+    //         tokenInstance = instance;
+    //         return KhananiTokenSale.deployed();
+    //     }).then(function(SInstance){
+    //         tokenSaleInstance = SInstance;
+    //         //provision 75% of all token sale 
+    //         return tokenInstance.transfer(tokenSaleInstance.address, tokensAvailable, {from:admin} );
+    //     }).then(function(receipt){
+    //         assert.equal(receipt.logs.length, 1, 'trigger one event');
+    //         assert.equal(receipt.logs[0].event, 'Transfer', 'should be a transfer event');
+    //         assert.equal(receipt.logs[0].args._from, tokenSaleInstance.address, 'logs the account tokens are transferred from');
+    //         assert.equal(receipt.logs[0].args._to, admin, 'logs the account tokens are transferred to');
+    //         assert.equal(receipt.logs[0].args._value, tokensAvailable, 'logs the transfer amount');
+    //         numberOfTokens = 10;
+    //         //var value = numberOfTokens * tokenPrice; 
+            
+    //         return tokenSaleInstance.buyTokens(numberOfTokens,{from: buyer, value: numberOfTokens * tokenPrice});
+    //     }).then(function(receipt){
+    //         console.log('--------',receipt.logs[0].args._amount)
+    //         assert.equal(receipt.logs.length, 1, 'trigger one event');
+    //         assert.equal(receipt.logs[0].event, 'Sell', 'should be a sell event');
+    //         assert.equal(receipt.logs[0].args._buyer, buyer, 'logs the account that purchased tokens');
+    //         assert.equal(receipt.logs[0].args._amount, numberOfTokens, 'logs the number of token purchased');
+    //         return tokenSaleInstance.tokensSold();
+    //     }).then(function(amount){
+    //         console.log('amount----',amount.toNumber())
+    //         assert.equal(amount.toNumber(), numberOfTokens, 'increments the number of tokens sold');
+    //         return tokenInstance.balanceOf(buyer);
+    //     })
+    //     .then(function(buyerBalance){
+    //         console.log('buyer----',buyerBalance.toNumber())
+    //         assert.equal(buyerBalance.toNumber(), numberOfTokens)    
+    //         return tokenInstance.balanceOf(tokenSaleInstance.address);
+    //     })
+    //     .then(function(balance){
+    //         assert.equal(balance.toNumber(), tokensAvailable - numberOfTokens)
+    //         //try to buy token diff from the ether value
+    //         return tokenSaleInstance.buyTokens(numberOfTokens,{from: buyer, value: 1});
+    //     }).then(assert.fail).catch(function(error){
+    //         assert(error.message.indexOf('revert') >= 0, 'msg.value must be equal number of tokens in wei')
+    //         return tokenSaleInstance.buyTokens(800000,{from: buyer, value: numberOfTokens * tokenPrice});
+    //     })
+    //     .then(assert.fail).catch(function(error){
+    //         console.log(error);
+    //         assert(error.message.indexOf('revert') >= 0, ' cannot purchase more tokens then available')
+    //     })
+    // });
+
+    // it('Ends Token Sale',function(){
+    //     return KhananiToken.deployed().then(function(instance){
+    //         tokenInstance = instance;
+    //         return KhananiTokenSale.deployed();
+    //     }).then(function(SInstance){
+    //         tokenSaleInstance = SInstance;
+    //         //try to end sale other than admin
+    //         return tokenSaleInstance.endSale({from:buyer});
+    //     }).then(assert.fail).catch(function(error){
+    //         //console.log(error);
+    //         assert(error.message.indexOf('revert') >= 0, 'must be admin to end sales');
+    //         return tokenSaleInstance.endSale({from:admin});
+    //     }).then(function(receipt){
+    //         //console.log(receipt);
+    //         // assert.equal(receipt.logs.length, 1, 'trigger one event');
+    //         // assert.equal(receipt.logs[0].event, 'Sell', 'should be a sell event');
+    //         // assert.equal(receipt.logs[0].args._buyer, buyer, 'logs the account that purchased tokens');
+    //         // assert.equal(receipt.logs[0].args._amount, numberOfTokens, 'logs the number of token purchased');
+    //         return tokenInstance.balanceOf(admin);
+    //     }).then(function(balance){
+    //         assert.equal(balance.toNumber(), 999990, 'returns all unsold khanani tokens to admins');
+    //         //token price is reset when contract is destructed
+    //         return tokenSaleInstance.tokenPrice();
+    //     }).then(function(price){
+    //         assert.equal(price.toNumber(), 0,'token prices reset after contract destruction')
+    //     })
+
+    // })
+
+    it('ends token sale', function() {
+        return KhananiToken.deployed().then(function(instance) {
+          // Grab token instance first
+          tokenInstance = instance;
+          return KhananiTokenSale.deployed();
+        }).then(function(instance) {
+          // Then grab token sale instance
+          tokenSaleInstance = instance;
+          // Try to end sale from account other than the admin
+          return tokenSaleInstance.endSale({ from: buyer });
+        }).then(assert.fail).catch(function(error) {
+          assert(error.message.indexOf('revert' >= 0, 'must be admin to end sale'));
+          // End sale as admin
+          return tokenSaleInstance.endSale({ from: admin });
+        }).then(function(receipt) {
+          console.log(receipt.logs);
+            return tokenInstance.balanceOf(admin);
+        }).then(function(balance) {
+          assert.equal(balance.toNumber(), 999990, 'returns all unsold Khanani tokens to admin');
+          // Check that token price was reset when selfDestruct was called
+          //return tokenSaleInstance.tokenPrice();
+        })
+        // .then(function(price) {
+        //   assert.equal(price.toNumber(), 0, 'token price was reset');
+        // });
+      });
 });
